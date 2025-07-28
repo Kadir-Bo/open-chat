@@ -65,9 +65,8 @@ const ChatHeader = () => {
           items={models}
           onSelect={handleSelectModel}
           selectedItem={selectedModel}
-          align="top"
-          spacing="8"
           closeDropDown={handleCloseModelDropdown}
+          className="top-8"
         />
       </div>
 
@@ -95,8 +94,8 @@ const ChatHeader = () => {
             state={isMoreOptionsOpen}
             items={moreOptions}
             onSelect={handleMoreOptionSelect}
-            align={"right"}
             closeDropDown={handleCloseMoreOptionsDropDown}
+            className="right-0"
           />
         </div>
       </div>

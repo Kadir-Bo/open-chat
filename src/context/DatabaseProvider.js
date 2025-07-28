@@ -7,9 +7,13 @@ const DatabaseContext = createContext();
 
 export function DatabaseProvider({ children }) {
   const db = getFirestore(app);
-
+  const values = {
+    db,
+  };
   return (
-    <DatabaseContext.Provider value={db}>{children}</DatabaseContext.Provider>
+    <DatabaseContext.Provider value={values}>
+      {children}
+    </DatabaseContext.Provider>
   );
 }
 

@@ -1,15 +1,16 @@
 "use client";
-
 import { Send } from "@mui/icons-material";
 import React, { useState, useRef } from "react";
+import { useChat } from "@/context";
 
 const ChatInput = () => {
   const [message, setMessage] = useState("");
   const textareaRef = useRef(null);
+  const { sendMessage } = useChat();
 
   const handleSend = () => {
     if (!message.trim()) return;
-    console.log("Send:", message);
+    sendMessage(message);
     setMessage("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -36,7 +37,7 @@ const ChatInput = () => {
       <div className="w-full max-w-4xl">
         <div className="flex items-end bg-neutral-900 text-white rounded-xl px-4 py-2">
           <textarea
-            ref={textareaRef} // ⬅️ hier nur das ref-Objekt übergeben!
+            ref={textareaRef}
             placeholder="Ask anything…"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -48,7 +49,7 @@ const ChatInput = () => {
           />
           <button
             onClick={handleSend}
-            className=" transition rounded-full bg-blue-600 hover:bg-blue-700 cursor-pointer h-8 w-8 p-2 flex items-center justify-center"
+            className="transition rounded-full bg-blue-600 hover:bg-blue-700 cursor-pointer h-8 w-8 p-2 flex items-center justify-center"
           >
             <Send fontSize="inherit" />
           </button>

@@ -9,25 +9,14 @@ const DropDownMenu = ({
   items = [],
   onSelect = () => {},
   selecteditem = null,
-  align = "top",
-  spacing = "0",
   className = "",
 }) => {
-  const positionClasses = {
-    top: `top-${spacing}`,
-    bottom: `bottom-${spacing}`,
-    left: `left-${spacing}`,
-    right: `right-${spacing}`,
-  };
-
   const DropDownRef = useRef(null);
   useOnClickOutside(DropDownRef, () => closeDropDown());
   return (
     state && (
       <div
-        className={`absolute z-10 w-40 bg-neutral-900 border border-neutral-700 rounded-xl shadow p-1 ${
-          positionClasses[align] || positionClasses.bottom
-        }
+        className={`absolute z-10 w-40 bg-neutral-900 border border-neutral-700 rounded-xl shadow p-1 
         ${className}
         `}
         ref={DropDownRef}

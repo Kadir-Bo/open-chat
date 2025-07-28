@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context";
+import { ChatProvider, useAuth } from "@/context";
 import {
   ChatHeader,
   ChatHistory,
@@ -31,14 +31,16 @@ const Chat = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-row items-start justify-start">
-      <Sidebar />
-      <div className="w-full h-full flex flex-col relative">
-        <ChatHeader />
-        <ChatHistory />
-        <ChatInput />
+    <ChatProvider>
+      <div className="h-screen overflow-hidden flex flex-row items-start justify-start">
+        <Sidebar />
+        <div className="w-full h-full flex flex-col relative">
+          <ChatHeader />
+          <ChatHistory />
+          <ChatInput />
+        </div>
       </div>
-    </div>
+    </ChatProvider>
   );
 };
 

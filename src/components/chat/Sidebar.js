@@ -56,9 +56,7 @@ const Sidebar = () => {
           items={accountMenuItems}
           onSelect={handleSelectAccountMenu}
           closeDropDown={handleCloseAccountMenu}
-          align="bottom"
-          spacing="12"
-          className="w-full"
+          className="w-full bottom-12"
         />
         <button
           className="w-full text-left px-3 py-3 rounded-lg hover:bg-neutral-800 text-white text-sm cursor-pointer"

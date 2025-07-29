@@ -1,14 +1,22 @@
 "use client";
 import { Send } from "@mui/icons-material";
 import React, { useState, useRef } from "react";
-import { useChat } from "@/context";
+import { useChat, useModal } from "@/context";
+import { SignInForm } from "@/components";
 
 const ChatInput = () => {
   const [message, setMessage] = useState("");
   const textareaRef = useRef(null);
-  const { sendMessage } = useChat();
+  const { sendMessage, trial } = useChat();
+  const { openModal } = useModal();
 
   const handleSend = () => {
+    if (trial) {
+      openModal(
+        <SignInForm description="Please sign in to continue your conversation" />
+      );
+      return;
+    }
     if (!message.trim()) return;
     sendMessage(message);
     setMessage("");

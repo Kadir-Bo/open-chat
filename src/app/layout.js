@@ -1,7 +1,12 @@
 "use client";
 import { Footer, Header } from "@/components";
 import "../styles/globals.css";
-import { AuthProvider, ChatProvider, DatabaseProvider } from "@/context";
+import {
+  AuthProvider,
+  ChatProvider,
+  DatabaseProvider,
+  ModalProvider,
+} from "@/context";
 import { usePathname } from "next/navigation"; // <– hinzufügen
 export default function RootLayout({ children }) {
   const pathname = usePathname(); // <– aktueller Pfad
@@ -12,7 +17,9 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <DatabaseProvider>
             <ChatProvider>
-              <main>{children}</main>
+              <ModalProvider>
+                <main>{children}</main>
+              </ModalProvider>
             </ChatProvider>
           </DatabaseProvider>
         </AuthProvider>

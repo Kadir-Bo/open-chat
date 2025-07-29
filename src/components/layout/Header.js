@@ -1,13 +1,14 @@
 "use client";
 import { ChevronRight, MoreHoriz, ShareRounded } from "@mui/icons-material";
 import React, { useState } from "react";
-import { DropDownMenu } from "@/components";
-import { useAuth, useChat } from "@/context";
+import { DropDownMenu, SignInForm } from "@/components";
+import { useAuth, useChat, useModal } from "@/context";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const Header = () => {
   const { modelName, changeModel, supportedModels } = useChat();
+  const { openModal } = useModal();
   const { user } = useAuth();
   const pathname = usePathname();
   const isHomeRoute = pathname === "/";
@@ -18,8 +19,13 @@ const Header = () => {
   const currentModel = supportedModels.find((m) => m.id === modelName);
 
   const handleSelectModel = (modelId) => {
-    changeModel(modelId);
-    setIsModelOpen(false);
+    if (user) {
+      changeModel(modelId);
+      setIsModelOpen(false);
+    } else {
+      openModal(<SignInForm theme="light" />);
+      setIsModelOpen(false);
+    }
   };
 
   const handleMoreOptionSelect = (optionId) => {
@@ -30,7 +36,7 @@ const Header = () => {
 
   return (
     <div className="py-4 flex justify-between items-center w-full">
-      {/* Model selector */}
+      {/* Chat Model selector */}
       {isHomeRoute ? (
         <div className="relative inline-block text-left pl-4 w-max">
           <button

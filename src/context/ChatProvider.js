@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useAuth } from "./AuthProvider";
 
 const ChatContext = createContext();
 
@@ -30,6 +31,8 @@ export function ChatProvider({ children }) {
   const [messages, setMessages] = useState([]);
   const [chatSession, setChatSession] = useState(null);
   const [modelName, setModelName] = useState("gemini-2.0-flash-lite");
+  const [trial, setTrial] = useState(false);
+  const { user } = useAuth();
 
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API;
 
@@ -51,7 +54,6 @@ export function ChatProvider({ children }) {
     () => modelName.startsWith("gemini-1.5"),
     [modelName]
   );
-
   // Initialize chat session whenever genAI or modelName changes
   useEffect(() => {
     if (!genAI || !modelName) {
@@ -60,7 +62,10 @@ export function ChatProvider({ children }) {
       return;
     }
 
-    if (!SUPPORTED_MODELS.includes(modelName)) {
+    const isSupported = SUPPORTED_MODELS.some(
+      (model) => model.id === modelName
+    );
+    if (!isSupported) {
       console.warn(`Model "${modelName}" is not supported.`);
       setChatSession(null);
       setMessages([]);
@@ -109,8 +114,13 @@ export function ChatProvider({ children }) {
 
   // Send message to Gemini and update messages state
   const sendMessage = async (userInput) => {
+    if (!user && messages.length > 0) {
+      setTrial(true);
+      return;
+    }
     if (!chatSession) {
-      console.error("Chat session not initialized");
+      console.warn("Chat session not ready. Retrying in 100ms...");
+      setTimeout(() => sendMessage(userInput), 100);
       return;
     }
 
@@ -163,6 +173,7 @@ export function ChatProvider({ children }) {
     modelName,
     changeModel,
     supportedModels: SUPPORTED_MODELS,
+    trial,
   };
   return <ChatContext.Provider value={values}>{children}</ChatContext.Provider>;
 }

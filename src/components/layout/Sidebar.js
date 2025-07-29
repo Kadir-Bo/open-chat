@@ -64,42 +64,48 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="h-full w-[360px] p-4 flex flex-col border-r border-neutral-800 bg-neutral-950">
+    <div
+      className={`h-full w-[360px] p-4 flex flex-col border-r border-neutral-800 bg-neutral-950 ${
+        user ? "" : "justify-between"
+      }`}
+    >
       {/* Header */}
-      <div className="mb-6 ml-4">
+      <Link href={"/"} className="py-3 pl-4">
         <span className="font-bold text-sm text-white">Open Chat</span>
-      </div>
+      </Link>
 
-      <div className="flex flex-col justify-start flex-1 gap-4">
-        {/* New Chat */}
-        <button
-          onClick={handleNewChat}
-          className="w-full flex justify-start items-center gap-2 text-left px-4 py-3 rounded-md hover:bg-neutral-800 text-white text-sm cursor-pointer"
-        >
-          New Chat <Add fontSize="small" />
-        </button>
+      {user && (
+        <div className="flex flex-col justify-start flex-1 gap-4">
+          {/* New Chat */}
+          <button
+            onClick={handleNewChat}
+            className="w-full flex justify-start items-center gap-2 text-left px-4 py-3 rounded-md hover:bg-neutral-800 text-white text-sm cursor-pointer"
+          >
+            New Chat <Add fontSize="small" />
+          </button>
 
-        <hr className="border-neutral-800" />
+          <hr className="border-neutral-800" />
 
-        {/* Chat-Liste */}
-        <div className="flex-1 space-y-2 overflow-y-auto pr-1">
-          {chats.length === 0 ? (
-            <p className="text-neutral-500 text-sm px-4">No Chats</p>
-          ) : (
-            chats.map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => handleSelectChat(chat.id)}
-                className={`w-full text-left px-4 py-3 rounded-md text-white text-sm cursor-pointer hover:bg-neutral-800 ${
-                  activeChatId === chat.id ? "bg-neutral-800" : ""
-                }`}
-              >
-                {chat.title || "Untitled Chat"}
-              </button>
-            ))
-          )}
+          {/* Chat-Liste */}
+          <div className="flex-1 space-y-2 overflow-y-auto pr-1">
+            {chats.length === 0 ? (
+              <p className="text-neutral-500 text-sm px-4">No Chats</p>
+            ) : (
+              chats.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => handleSelectChat(chat.id)}
+                  className={`w-full text-left px-4 py-3 rounded-md text-white text-sm cursor-pointer hover:bg-neutral-800 ${
+                    activeChatId === chat.id ? "bg-neutral-800" : ""
+                  }`}
+                >
+                  {chat.title || "Untitled Chat"}
+                </button>
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Account Menü */}
       {user ? (

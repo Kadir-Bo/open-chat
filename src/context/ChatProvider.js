@@ -9,34 +9,34 @@ import React, {
 } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useAuth } from "./AuthProvider";
+import { useDatabase } from "./DatabaseProvider";
 
 const ChatContext = createContext();
 
 const SUPPORTED_MODELS = [
-  {
-    id: "gemini-2.5-flash-lite",
-    name: "Lite 2.5",
-  },
-  {
-    id: "gemini-2.0-flash",
-    name: "Flash 2.0",
-  },
-  {
-    id: "gemini-2.0-flash-lite",
-    name: "Lite 2.0",
-  },
+  { id: "gemini-2.5-flash-lite", name: "Lite 2.5" },
+  { id: "gemini-2.0-flash", name: "Flash 2.0" },
+  { id: "gemini-2.0-flash-lite", name: "Lite 2.0" },
 ];
+
+// Hilfsfunktion: Titel generieren (max 40 Zeichen)
+const generateTitleFromText = (text) => {
+  const firstLine = text.split("\n")[0];
+  return firstLine.length > 40 ? firstLine.slice(0, 40) + "..." : firstLine;
+};
 
 export function ChatProvider({ children }) {
   const [messages, setMessages] = useState([]);
   const [chatSession, setChatSession] = useState(null);
   const [modelName, setModelName] = useState("gemini-2.0-flash-lite");
   const [trial, setTrial] = useState(false);
+  const [chatId, setChatId] = useState(null);
+
   const { user } = useAuth();
+  const { createChat, renameChat, addMessage } = useDatabase();
 
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API;
 
-  // Initialize GoogleGenerativeAI client only if API key is set
   const genAI = useMemo(() => {
     if (!apiKey) {
       console.warn("No Gemini API key found in environment variables.");
@@ -54,7 +54,7 @@ export function ChatProvider({ children }) {
     () => modelName.startsWith("gemini-1.5"),
     [modelName]
   );
-  // Initialize chat session whenever genAI or modelName changes
+
   useEffect(() => {
     if (!genAI || !modelName) {
       setChatSession(null);
@@ -93,6 +93,7 @@ export function ChatProvider({ children }) {
             }
             setChatSession(session);
             setMessages([]);
+            setChatId(null); // reset chatId on model change
             console.log(`Chat session started for model "${modelName}".`);
           })
           .catch((error) => {
@@ -103,6 +104,7 @@ export function ChatProvider({ children }) {
       } else {
         setChatSession(model);
         setMessages([]);
+        setChatId(null); // reset chatId on model change
         console.log(`Chat session initialized for model "${modelName}".`);
       }
     } catch (error) {
@@ -112,7 +114,6 @@ export function ChatProvider({ children }) {
     }
   }, [genAI, modelName, is15Model]);
 
-  // Send message to Gemini and update messages state
   const sendMessage = async (userInput) => {
     if (!user && messages.length > 0) {
       setTrial(true);
@@ -150,6 +151,21 @@ export function ChatProvider({ children }) {
 
       const botMessage = { role: "bot", text: botText };
       setMessages((prev) => [...prev, botMessage]);
+
+      // Wenn noch kein Chat existiert -> Chat erstellen, Titel generieren, Nachrichten speichern
+      if (!chatId && user?.uid) {
+        const title = generateTitleFromText(botText);
+        const newChat = await createChat(user.uid);
+        setChatId(newChat.id);
+
+        await renameChat(user.uid, newChat.id, title);
+        await addMessage(user.uid, newChat.id, userMessage);
+        await addMessage(user.uid, newChat.id, botMessage);
+      } else if (chatId && user?.uid) {
+        // Folge-Nachrichten speichern
+        await addMessage(user.uid, chatId, userMessage);
+        await addMessage(user.uid, chatId, botMessage);
+      }
     } catch (error) {
       console.error("Gemini SDK Error:", error);
       setMessages((prev) => [
@@ -162,6 +178,8 @@ export function ChatProvider({ children }) {
   const changeModel = (newModel) => {
     if (SUPPORTED_MODELS.some((model) => model.id === newModel)) {
       setModelName(newModel);
+      setChatId(null);
+      setMessages([]);
     } else {
       console.warn("Unsupported model:", newModel);
     }
@@ -174,6 +192,7 @@ export function ChatProvider({ children }) {
     changeModel,
     supportedModels: SUPPORTED_MODELS,
     trial,
+    chatId,
   };
   return <ChatContext.Provider value={values}>{children}</ChatContext.Provider>;
 }

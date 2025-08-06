@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { DropDownMenu } from "@/components";
-import { Add, Login, Logout, Settings } from "@mui/icons-material";
+import { ChatSidebarCard, DropDownMenu } from "@/components";
+import { Add, Login, Logout, MoreVert, Settings } from "@mui/icons-material";
 import { useDatabase, useAuth } from "@/context";
 import Link from "next/link";
 
@@ -33,7 +33,6 @@ const Sidebar = () => {
 
   const handleSelectChat = (chatId) => {
     setActiveChatId(chatId);
-    // z. B. redirectTo(`/chat/${chatId}`)
   };
 
   const accountMenuItems = [
@@ -87,23 +86,20 @@ const Sidebar = () => {
           <hr className="border-neutral-800" />
 
           {/* Chat-Liste */}
-          <div className="flex-1 space-y-2 overflow-y-auto pr-1">
+          <ul className="flex-1 space-y-2 pr-1">
             {chats.length === 0 ? (
               <p className="text-neutral-500 text-sm px-4">No Chats</p>
             ) : (
               chats.map((chat) => (
-                <button
+                <ChatSidebarCard
+                  chat={chat}
                   key={chat.id}
-                  onClick={() => handleSelectChat(chat.id)}
-                  className={`w-full text-left px-4 py-3 rounded-md text-white text-sm cursor-pointer hover:bg-neutral-800 ${
-                    activeChatId === chat.id ? "bg-neutral-800" : ""
-                  }`}
-                >
-                  {chat.title || "Untitled Chat"}
-                </button>
+                  handleSelectChat={handleSelectChat}
+                  activeChatId={activeChatId}
+                />
               ))
             )}
-          </div>
+          </ul>
         </div>
       )}
 

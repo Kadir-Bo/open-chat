@@ -1,31 +1,24 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { Header, SignInForm } from "@/components";
 import { useAuth } from "@/context";
 import { useRouter } from "next/navigation";
-import { Header, SignInForm } from "@/components";
 
 const SignIn = () => {
-  const { signIn, loading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-    try {
-      await signIn(email, password);
-      router.push("/chat");
-    } catch (err) {
-      setError(err.message);
-    }
-    setIsSubmitting(false);
-  };
 
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/"); // Redirect to home if user is logged in
+    }
+  }, [user, loading, router]);
+
+  if (loading || user) {
+    return null; // Avoid flicker or showing sign-in page while checking
+  }
   return (
-    <div className="min-h-screen w-screen flex flex-col items-center justify-center">
+    <div className="min-h-screen w-screen flex flex-col items-center justify-start pt-48">
       <Header />
       <div className="border border-neutral-800 text-gray-100 rounded-lg w-full max-w-md p-8">
         <SignInForm theme="dark" />

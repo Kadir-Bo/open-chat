@@ -1,6 +1,7 @@
 import { useAuth } from "@/context";
 import Link from "next/link";
 import React, { useState } from "react";
+import { SignInWithGoogle } from "..";
 
 const SignInForm = ({ theme = "light", description = "" }) => {
   const { signIn, loading } = useAuth();
@@ -26,7 +27,10 @@ const SignInForm = ({ theme = "light", description = "" }) => {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="relative">
+      <form
+        onSubmit={handleSubmit}
+        className={`relative w-full max-w-md ${isDark ? "bg-neutral-950" : ""}`}
+      >
         <div className="mb-6 ">
           <h2
             className={`text-2xl font-semibold mb-2 ${
@@ -94,14 +98,20 @@ const SignInForm = ({ theme = "light", description = "" }) => {
         <button
           type="submit"
           disabled={isSubmitting || loading}
-          className={`w-full transition-all duration-200 py-3 rounded-md font-semibold disabled:opacity-50 cursor-pointer ${
+          className={`w-full transition-all duration-200 py-3 rounded-md font-medium disabled:opacity-50 cursor-pointer ${
             isDark
               ? "border border-neutral-400 hover:border-blue-400 text-neutral-300 bg-black/50 hover:bg-black hover:text-white"
               : "border border-blue-400 hover:border-blue-600 text-white bg-blue-600 hover:bg-blue-800"
           }`}
         >
-          {isSubmitting || loading ? "Signing In..." : "Sign In"}
+          {isSubmitting || loading ? "Signing In..." : "Sign In with Account"}
         </button>
+        <div className="flex items-center justify-center gap-4 my-4 text-neutral-400">
+          <hr className="border-neutral-600 w-full" />
+          <span>or</span>
+          <hr className="border-neutral-600 w-full" />
+        </div>
+        <SignInWithGoogle />
         <div className="mt-8">
           <p
             className={`text-sm text-center ${
@@ -117,6 +127,7 @@ const SignInForm = ({ theme = "light", description = "" }) => {
             </Link>
           </p>
         </div>
+
         {error && (
           <div className="w-full absolute -bottom-28">
             <p className="border border-red-500 text-white text-center py-4 bg-neutral-950 rounded-lg">

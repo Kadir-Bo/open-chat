@@ -1,38 +1,36 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ChatSidebarCard, DropDownMenu } from "@/components";
+import { ChatSidebarCard, DropDownMenu, UserSettingsModal } from "@/components";
 import { Add, Login, Logout, MoreVert, Settings } from "@mui/icons-material";
-import { useDatabase, useAuth } from "@/context";
+import { useAuth, useModal, useChat } from "@/context";
 import Link from "next/link";
 
 const Sidebar = () => {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [chats, setChats] = useState([]);
-  const [activeChatId, setActiveChatId] = useState(null);
 
-  const { getChats, createChat } = useDatabase();
-  const { user, logOut } = useAuth(); // Falls du user.uid brauchst
+  const { user, logOut } = useAuth();
+  const { openModal } = useModal();
+  const {
+    enableViewAllChats,
+    fetchChats,
+    chatsList,
+    activeChatId,
+    changeChat,
+  } = useChat();
 
-  // Holt alle Chats beim Laden
   useEffect(() => {
     if (user?.uid) {
       fetchChats();
     }
-  }, [user?.uid]);
+  }, [user?.uid, chatsList]);
 
-  const fetchChats = async () => {
-    const chatList = await getChats(user.uid);
-    setChats(chatList);
-  };
-
-  const handleNewChat = async () => {
-    const newChat = await createChat(user.uid);
-    setChats((prev) => [newChat, ...prev]);
-    setActiveChatId(newChat.id);
+  const handleNewChat = () => {
+    const tempChatId = `temp-${Date.now()}`;
+    changeChat(tempChatId);
   };
 
   const handleSelectChat = (chatId) => {
-    setActiveChatId(chatId);
+    changeChat(chatId);
   };
 
   const accountMenuItems = [
@@ -58,6 +56,7 @@ const Sidebar = () => {
         return logOut();
 
       case "settings":
+        openModal(<UserSettingsModal />);
         return;
     }
   };
@@ -73,35 +72,47 @@ const Sidebar = () => {
         <span className="font-bold text-sm text-white">Open Chat</span>
       </Link>
 
-      {user && (
-        <div className="flex flex-col justify-start flex-1 gap-4">
-          {/* New Chat */}
-          <button
-            onClick={handleNewChat}
-            className="w-full flex justify-start items-center gap-2 text-left px-4 py-3 rounded-md hover:bg-neutral-800 text-white text-sm cursor-pointer"
-          >
-            New Chat <Add fontSize="small" />
-          </button>
+      <div className="flex flex-col justify-start flex-1 gap-4">
+        {/* New Chat */}
+        <button
+          onClick={handleNewChat}
+          className="w-full flex justify-start items-center gap-2 text-left px-4 py-3 rounded-md hover:bg-neutral-800 text-white text-sm cursor-pointer"
+        >
+          New Chat <Add fontSize="small" />
+        </button>
 
-          <hr className="border-neutral-800" />
+        <hr className="border-neutral-800" />
 
-          {/* Chat-Liste */}
-          <ul className="flex-1 space-y-2 pr-1">
-            {chats.length === 0 ? (
-              <p className="text-neutral-500 text-sm px-4">No Chats</p>
-            ) : (
-              chats.map((chat) => (
-                <ChatSidebarCard
-                  chat={chat}
-                  key={chat.id}
-                  handleSelectChat={handleSelectChat}
-                  activeChatId={activeChatId}
-                />
-              ))
-            )}
-          </ul>
-        </div>
-      )}
+        {/* Chat-Liste */}
+        {user && (
+          <div className="flex flex-col flex-1">
+            <ul className="flex-1 space-y-2 pr-1">
+              {chatsList.length >= 1 ? (
+                chatsList
+                  .slice(0, 10) // take only first 10 items
+                  .map((chat, idx) => (
+                    <ChatSidebarCard
+                      chat={chat}
+                      key={chat.id + idx}
+                      handleSelectChat={handleSelectChat}
+                      activeChatId={activeChatId}
+                    />
+                  ))
+              ) : (
+                <p className="text-neutral-500 text-sm px-4">No Chats</p>
+              )}
+            </ul>
+            <div className="flex items-center justify-center">
+              <Link
+                href="/recent"
+                className="text-sm py-2 text-gray-400 hover:text-white transition cursor-pointer"
+              >
+                View All Chats
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Account Menü */}
       {user ? (

@@ -39,9 +39,14 @@ const ChatInput = () => {
         textareaRef.current.scrollHeight + "px";
     }
   };
-
+  const handleContainerFocus = () => {
+    textareaRef.current?.focus();
+  };
   return (
-    <div className="w-full flex justify-center absolute bottom-8 px-4">
+    <div
+      className="w-full flex justify-center absolute bottom-8 px-4 cursor-text"
+      onClick={handleContainerFocus}
+    >
       <div className="w-full max-w-4xl">
         <div className="flex items-end bg-neutral-900 text-white rounded-xl px-4 py-2">
           <textarea

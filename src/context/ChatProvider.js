@@ -19,21 +19,25 @@ const SUPPORTED_MODELS = [
   { id: "gemini-2.0-flash-lite", name: "Lite 2.0" },
 ];
 
-// Hilfsfunktion: Titel generieren (max 40 Zeichen)
-const generateTitleFromText = (text) => {
-  const firstLine = text.split("\n")[0];
-  return firstLine.length > 40 ? firstLine.slice(0, 40) + "..." : firstLine;
-};
-
 export function ChatProvider({ children }) {
   const [messages, setMessages] = useState([]);
   const [chatSession, setChatSession] = useState(null);
   const [modelName, setModelName] = useState("gemini-2.0-flash-lite");
   const [trial, setTrial] = useState(false);
   const [chatId, setChatId] = useState(null);
+  const [chatsList, setChatsList] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [viewAllChats, setViewAllChats] = useState(false);
 
   const { user } = useAuth();
-  const { createChat, renameChat, addMessage } = useDatabase();
+  const {
+    createChat,
+    renameChat,
+    addMessage,
+    getChats,
+    generateTitleFromText,
+    getMessages,
+  } = useDatabase();
 
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API;
 
@@ -114,18 +118,28 @@ export function ChatProvider({ children }) {
     }
   }, [genAI, modelName, is15Model]);
 
+  // ================================
+  //  Messages
+  // ================================
   const sendMessage = async (userInput) => {
+    console.log("[sendMessage] Called with input:", userInput);
+
     if (!user && messages.length > 0) {
+      console.log("[sendMessage] User not logged in & trial already started.");
       setTrial(true);
       return;
     }
+
     if (!chatSession) {
-      console.warn("Chat session not ready. Retrying in 100ms...");
+      console.warn(
+        "[sendMessage] Chat session not ready. Retrying in 100ms..."
+      );
       setTimeout(() => sendMessage(userInput), 100);
       return;
     }
 
     const userMessage = { role: "user", text: userInput };
+    console.log("[sendMessage] Adding user message to state:", userMessage);
     setMessages((prev) => [...prev, userMessage]);
 
     try {
@@ -133,15 +147,13 @@ export function ChatProvider({ children }) {
 
       if (is15Model && typeof chatSession.sendMessage === "function") {
         const result = await chatSession.sendMessage(userInput);
-        if (!result?.response) {
+        if (!result?.response)
           throw new Error("No response in sendMessage result");
-        }
         botText = result.response.text();
       } else if (typeof chatSession.generateContent === "function") {
         const result = await chatSession.generateContent(userInput);
-        if (!result?.response) {
+        if (!result?.response)
           throw new Error("No response in generateContent result");
-        }
         botText = result.response.text();
       } else {
         throw new Error(
@@ -152,22 +164,26 @@ export function ChatProvider({ children }) {
       const botMessage = { role: "bot", text: botText };
       setMessages((prev) => [...prev, botMessage]);
 
-      // Wenn noch kein Chat existiert -> Chat erstellen, Titel generieren, Nachrichten speichern
+      // Create new chat if none exists
       if (!chatId && user?.uid) {
-        const title = generateTitleFromText(botText);
-        const newChat = await createChat(user.uid);
-        setChatId(newChat.id);
+        const generatedTitle = await generateTitleFromText(botText);
+        const newChat = await createChat(generatedTitle);
 
-        await renameChat(user.uid, newChat.id, title);
-        await addMessage(user.uid, newChat.id, userMessage);
-        await addMessage(user.uid, newChat.id, botMessage);
+        setChatId(newChat.id);
+        setActiveChatId(newChat.id);
+
+        await addMessage(newChat.id, userMessage);
+        await addMessage(newChat.id, botMessage);
+
+        const chatWithTitle = { ...newChat, title: generatedTitle };
+        addChatToList(chatWithTitle);
+        console.log(chatsList);
       } else if (chatId && user?.uid) {
-        // Folge-Nachrichten speichern
-        await addMessage(user.uid, chatId, userMessage);
-        await addMessage(user.uid, chatId, botMessage);
+        await addMessage(chatId, userMessage);
+        await addMessage(chatId, botMessage);
       }
     } catch (error) {
-      console.error("Gemini SDK Error:", error);
+      console.error("[sendMessage] Gemini SDK Error:", error);
       setMessages((prev) => [
         ...prev,
         { role: "bot", text: "Something went wrong." },
@@ -175,6 +191,9 @@ export function ChatProvider({ children }) {
     }
   };
 
+  // ================================
+  //  Model
+  // ================================
   const changeModel = (newModel) => {
     if (SUPPORTED_MODELS.some((model) => model.id === newModel)) {
       setModelName(newModel);
@@ -185,6 +204,54 @@ export function ChatProvider({ children }) {
     }
   };
 
+  // ================================
+  //  Chats
+  // ================================
+  const resetMessages = () => {
+    setMessages([]);
+    return;
+  };
+  const changeChat = async (chatId) => {
+    setActiveChatId(chatId);
+
+    // Check if it's a temp chat (not in DB yet)
+    if (chatId.startsWith("temp-")) {
+      resetMessages();
+      return;
+    }
+
+    const chatMessages = await getMessages(chatId);
+    setMessages(chatMessages);
+  };
+  const enableViewAllChats = () => {
+    setViewAllChats(true);
+  };
+  const disableViewAllChats = () => {
+    setViewAllChats(false);
+  };
+  // ================================
+  //  Chat List
+  // ================================
+  const fetchChats = async () => {
+    const chatList = await getChats();
+    setChatsList(chatList);
+  };
+
+  const addChatToList = (chat) => {
+    setChatsList((prev) => [chat, ...prev]);
+  };
+
+  const removeChatFromList = (chatId) => {
+    setChatsList((prev) => prev.filter((chat) => chat.id !== chatId));
+    resetMessages();
+  };
+
+  const updateChatInList = (updatedChat) => {
+    setChatsList((prev) =>
+      prev.map((chat) => (chat.id === updatedChat.id ? updatedChat : chat))
+    );
+  };
+
   const values = {
     messages,
     sendMessage,
@@ -193,6 +260,16 @@ export function ChatProvider({ children }) {
     supportedModels: SUPPORTED_MODELS,
     trial,
     chatId,
+    fetchChats,
+    chatsList,
+    addChatToList,
+    removeChatFromList,
+    updateChatInList,
+    activeChatId,
+    changeChat,
+    viewAllChats,
+    disableViewAllChats,
+    enableViewAllChats,
   };
   return <ChatContext.Provider value={values}>{children}</ChatContext.Provider>;
 }

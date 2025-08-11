@@ -1,9 +1,10 @@
-import { Delete, Edit, MoreVert } from "@mui/icons-material";
+import { Check, Close, Delete, Edit, MoreVert, X } from "@mui/icons-material";
 import React, { useState, useCallback } from "react";
-import { DropDownMenu } from "@/components";
-import { useAuth, useDatabase } from "@/context";
+import { DeleteChatModal, DropDownMenu } from "@/components";
+import { useAuth, useDatabase, useModal } from "@/context";
 
 const ChatSidebarCard = ({ chat, handleSelectChat, activeChatId }) => {
+  const { openModal } = useModal();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [chatTitle, setChatTitle] = useState(chat.title || "Untitled Chat");
@@ -24,7 +25,7 @@ const ChatSidebarCard = ({ chat, handleSelectChat, activeChatId }) => {
   }, []);
 
   const handleDelete = useCallback(() => {
-    // Open modal confirmation (not implemented here)
+    openModal(<DeleteChatModal id={chat.id} />);
     setShowMoreMenu(false);
   }, []);
 
@@ -36,16 +37,17 @@ const ChatSidebarCard = ({ chat, handleSelectChat, activeChatId }) => {
   const handleTitleSubmit = () => {
     setIsRenaming(false);
     if (chat.title !== chatTitle.trim()) {
-      renameChat(user.id, chat.id, chatTitle.trim());
+      renameChat(chat.id, chatTitle.trim());
     }
   };
-
   const handleTitleKeyDown = (e) => {
-    if (e.key === "Enter") e.target.blur();
-    if (e.key === "Escape") {
-      setIsRenaming(false);
-      setChatTitle(chat.title || "Untitled Chat");
+    if (e.key === "Enter") {
+      handleTitleSubmit();
     }
+  };
+  const handleCancelRename = () => {
+    setIsRenaming(false);
+    setChatTitle(chat.title || "Untitled Chat");
   };
 
   const moreMenuItems = [
@@ -61,29 +63,40 @@ const ChatSidebarCard = ({ chat, handleSelectChat, activeChatId }) => {
       }`}
     >
       {isRenaming ? (
-        <input
-          value={chatTitle}
-          onChange={handleTitleChange}
-          onBlur={handleTitleSubmit}
-          onKeyDown={handleTitleKeyDown}
-          autoFocus
-          className="bg-transparent border-none outline-none w-full mr-2 text-white"
-        />
+        <div className="flex items-center justify-between">
+          <input
+            value={chatTitle}
+            onChange={handleTitleChange}
+            onKeyDown={handleTitleKeyDown}
+            autoFocus
+            className="bg-transparent border-none outline-none w-full mr-2 text-white"
+          />
+        </div>
       ) : (
-        <span className="truncate">{chatTitle}</span>
+        <span className="truncate max-w-[30ch]">{chatTitle}</span>
       )}
 
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          openMoreOptions();
-        }}
-        className="outline-none"
-      >
-        <MoreVert fontSize="small" />
-      </button>
-
+      {isRenaming ? (
+        <div className="flex gap-2">
+          <button onClick={handleTitleSubmit}>
+            <Check fontSize="small" />
+          </button>
+          <button className="text-gray-400" onClick={handleCancelRename}>
+            <Close fontSize="small" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            openMoreOptions();
+          }}
+          className="outline-none cursor-pointer"
+        >
+          <MoreVert fontSize="small" />
+        </button>
+      )}
       <DropDownMenu
         items={moreMenuItems}
         state={showMoreMenu}

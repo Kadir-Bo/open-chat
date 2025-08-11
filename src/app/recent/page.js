@@ -1,16 +1,14 @@
 // app/chat/page.tsx
 "use client";
 
-import { ChatHistory, ChatInput, Header, Sidebar } from "@/components";
+import { ChatInput, Sidebar, ViewAllChats } from "@/components";
 
 const Chat = () => {
   return (
     <div className="h-screen overflow-hidden flex flex-row items-start justify-start">
       <Sidebar />
-      <div className="w-full h-full flex flex-col relative">
-        <Header />
-        <ChatHistory />
-        <ChatInput />
+      <div className="w-full h-full flex flex-col relative pt-12">
+        <ViewAllChats />
       </div>
     </div>
   );
